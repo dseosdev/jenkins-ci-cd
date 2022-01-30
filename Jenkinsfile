@@ -1,50 +1,47 @@
 pipeline {
-    options {
-        disableConcurrentBuilds()
-    }
     agent {
-        kubernetes {
-            label 'docker-in-docker-maven'
-            yaml """
-apiVersion: v1
-kind: Pod
-spec:
-containers:
-- name: docker-client
-  image: docker:19.03.1
-  command: ['sleep', '99d']
-  env:
-    - name: DOCKER_HOST
-      value: tcp://localhost:2375
-- name: docker-daemon
-  image: docker:19.03.1-dind
-  env:
-    - name: DOCKER_TLS_CERTDIR
-      value: ""
-  securityContext:
-    privileged: true
-  volumeMounts:
-      - name: cache
-        mountPath: /var/lib/docker
-volumes:
-  - name: cache
-    hostPath:
-      path: /tmp
-      type: Directory
-"""
-        }
+      label 'kubepods'
     }
-    stages {
-        stage('Checkout') {
+    //agent any
+    environment {
+        DOCKER_IMAGE_NAME = "dseos/jenkins-ci-cd"
+        
+    }
+    stages {    
+        stage('Build Docker Image') {
+            when {
+                branch 'main'
+            }
             steps {
-                git 'https://github.com/jenkinsci/docker-jnlp-slave.git'
+                script {
+                    app = docker.build(DOCKER_IMAGE_NAME)
+                }
             }
         }
-        stage('Docker Build') {
+        stage('Push Docker Image') {
+            when {
+                branch 'main'
+            }
             steps {
-                container('docker-client') {
-                    sh 'docker version && DOCKER_BUILDKIT=1 docker build --progress plain -t testing .'
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
+                    }
                 }
+            }
+        }
+        stage('DeployToProduction') {
+            when {
+                branch 'main'
+            }
+            steps {
+                milestone(1)
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'k8s_svc_deploy.yaml',
+                    enableConfigSubstitution: true
+                )
             }
         }
     }
