@@ -1,7 +1,8 @@
 pipeline {
     
-    podTemplate {
-    node(POD_LABEL) {
+    agent {
+        label "slave"
+    }
     environment {
         DOCKER_IMAGE_NAME = "dseos/jenkins-ci-cd"
     }
@@ -42,7 +43,5 @@ pipeline {
                 )
             }
         }
-    }
-    }
     }
 }
