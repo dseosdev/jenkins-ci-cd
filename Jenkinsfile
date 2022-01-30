@@ -23,7 +23,7 @@ spec:
       //git 'https://github.com/jenkinsci/docker-jnlp-slave.git'
       container('docker') {
         sh '''
-        git 'https://github.com/jenkinsci/docker-jnlp-slave.git
+        git https://github.com/jenkinsci/docker-jnlp-slave.git
         docker build -t ${image} .
         '''
       }
