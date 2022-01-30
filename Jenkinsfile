@@ -1,7 +1,33 @@
 pipeline {
-    agent {
-        label 'kubepods'
-    }
+  agent {
+    kubernetes {
+      label 'spring-petclinic-demo'
+      defaultContainer 'jnlp'
+      yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+labels:
+  component: ci
+spec:
+  # Use service account that can deploy to all namespaces
+  serviceAccountName: cd-jenkins
+  containers:
+  - name: docker
+    image: docker:latest
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - mountPath: /var/run/docker.sock
+      name: docker-sock
+  volumes:
+    - name: docker-sock
+      hostPath:
+        path: /var/run/docker.sock
+"""
+}
+   }
     environment {
         DOCKER_IMAGE_NAME = "dseos/jenkins-ci-cd"
     }
@@ -11,8 +37,10 @@ pipeline {
                 branch 'main'
             }
             steps {
-                sh 'curl -fsSLO https://get.docker.com/builds/Linux/x86_64/docker-17.03.1-ce.tgz && tar --strip-components=1 -xvzf docker-17.03.1-ce.tgz -C /usr/local/bin'
-                sh 'docker version'
+                container('docker') {
+                    sh 'curl -fsSLO https://get.docker.com/builds/Linux/x86_64/docker-17.03.1-ce.tgz && tar --strip-components=1 -xvzf docker-17.03.1-ce.tgz -C /usr/local/bin'
+                    sh 'docker version'
+                }
             }
         }
         stage('Build Docker Image') {
@@ -21,7 +49,9 @@ pipeline {
             }
             steps {
                 script {
-                    app = docker.build(DOCKER_IMAGE_NAME)
+                    container('docker') {
+                        app = docker.build(DOCKER_IMAGE_NAME)
+                    }
                 }
             }
         }
