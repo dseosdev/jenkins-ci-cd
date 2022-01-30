@@ -39,7 +39,7 @@ pipeline {
                 milestone(1)
                 script {
                     kubernetesDeploy(
-                        configs: "deployment.yaml", 
+                        configs: "php-deployment.yaml", 
                         kubeconfigId: "aks-pruebas",
                         enableConfigSubstitution: true)
                 }
