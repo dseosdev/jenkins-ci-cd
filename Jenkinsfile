@@ -1,8 +1,4 @@
 pipeline {
-    
-    agent {
-        label "kubepods"
-    }
     environment {
         DOCKER_IMAGE_NAME = "dseos/jenkins-ci-cd"
     }
