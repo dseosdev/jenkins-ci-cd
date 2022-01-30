@@ -38,8 +38,8 @@ pipeline {
             steps {
                 milestone(1)
                 kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'k8s_svc_deploy.yaml',
+                    kubeconfigId: 'aks-pruebas',
+                    configs: 'deployment.yml',
                     enableConfigSubstitution: true
                 )
             }
