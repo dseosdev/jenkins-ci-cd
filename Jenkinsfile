@@ -1,59 +1,65 @@
-pipeline {
-  agent {
-    kubernetes {
-      label 'dind'
-      defaultContainer 'docker'
-      yaml """
----
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    app: jenkins
-spec:
-  containers:
-    - name: docker
-      image: docker:latest
-      command:
-        - /bin/cat
-      tty: true
-      volumeMounts:
-        - name: dind-certs
-          mountPath: /certs
-      env:
-        - name: DOCKER_TLS_CERTDIR
-          value: /certs
-        - name: DOCKER_CERT_PATH
-          value: /certs
-        - name: DOCKER_TLS_VERIFY
-          value: 1
-        - name: DOCKER_HOST
-          value: tcp://localhost:2376
-    - name: dind
-      image: docker:dind
-      securityContext:
-        privileged: true
-      env:
-        - name: DOCKER_TLS_CERTDIR
-          value: /certs
-      volumeMounts:
-        - name: dind-storage
-          mountPath: /var/lib/docker
-        - name: dind-certs
-          mountPath: /certs
-  volumes:
-    - name: dind-storage
-      emptyDir: {}
-    - name: dind-certs
-      emptyDir: {}
-"""
+def label = "worker-${UUID.randomUUID().toString()}"
+
+podTemplate(label: label, containers: [
+  containerTemplate(name: 'gradle', image: 'gradle:4.5.1-jdk9', command: 'cat', ttyEnabled: true),
+  containerTemplate(name: 'docker', image: 'docker', command: 'cat', ttyEnabled: true),
+  containerTemplate(name: 'kubectl', image: 'lachlanevenson/k8s-kubectl:v1.8.8', command: 'cat', ttyEnabled: true),
+  containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:latest', command: 'cat', ttyEnabled: true)
+],
+volumes: [
+  hostPathVolume(mountPath: '/home/gradle/.gradle', hostPath: '/tmp/jenkins/.gradle'),
+  hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock')
+]) {
+  node(label) {
+    def myRepo = checkout scm
+    def gitCommit = myRepo.GIT_COMMIT
+    def gitBranch = myRepo.GIT_BRANCH
+    def shortGitCommit = "${gitCommit[0..10]}"
+    def previousGitCommit = sh(script: "git rev-parse ${gitCommit}~", returnStdout: true)
+ 
+    stage('Test') {
+      try {
+        container('gradle') {
+          sh """
+            pwd
+            echo "GIT_BRANCH=${gitBranch}" >> /etc/environment
+            echo "GIT_COMMIT=${gitCommit}" >> /etc/environment
+            gradle test
+            """
+        }
+      }
+      catch (exc) {
+        println "Failed to test - ${currentBuild.fullDisplayName}"
+        throw(exc)
+      }
     }
-  }
-  stages {
-    stage('Run Docker Things') {
-      steps {
-        sh 'printenv'
-        sh 'docker info'
+    stage('Build') {
+      container('gradle') {
+        sh "gradle build"
+      }
+    }
+    stage('Create Docker images') {
+      container('docker') {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding',
+          credentialsId: 'dockerhub',
+          usernameVariable: 'DOCKER_HUB_USER',
+          passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+          sh """
+            docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD}
+            docker build -t namespace/my-image:${gitCommit} .
+            docker push namespace/my-image:${gitCommit}
+            """
+        }
+      }
+    }
+    stage('Run kubectl') {
+      container('kubectl') {
+        sh "kubectl get pods"
+      }
+    }
+    stage('Run helm') {
+      container('helm') {
+        sh "helm list"
       }
     }
   }
