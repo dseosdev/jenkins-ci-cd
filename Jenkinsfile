@@ -11,7 +11,7 @@ pipeline {
                 branch 'main'
             }
             steps {
-                    sh 'docker version'
+                    //sh 'docker version'
             }
         }
         stage('Build Docker Image') {
