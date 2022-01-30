@@ -39,7 +39,7 @@ pipeline {
                 milestone(1)
                 kubernetesDeploy(
                     kubeconfigId: 'aks-pruebas',
-                    configs: 'deployment.yml',
+                    configs: $workspace/deployment.yml,
                     enableConfigSubstitution: true
                 )
             }
