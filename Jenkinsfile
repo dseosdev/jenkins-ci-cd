@@ -1,8 +1,7 @@
 pipeline {
   agent {
     kubernetes {
-      label 'spring-petclinic-demo'
-      defaultContainer 'jnlp'
+      label 'kubepods'
       yaml """
 apiVersion: v1
 kind: Pod
