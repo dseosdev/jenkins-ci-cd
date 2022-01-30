@@ -4,7 +4,7 @@ pipeline {
         DOCKER_IMAGE_NAME = "dseos/jenkins-ci-cd"
     }
     stages {    
-        stage('Build Docker Image') {
+        stage('Docker Version') {
             when {
                 branch 'main'
             }
