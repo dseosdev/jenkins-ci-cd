@@ -37,11 +37,12 @@ pipeline {
             }
             steps {
                 milestone(1)
-                kubernetesDeploy(
-                    kubeconfigId: 'aks-pruebas',
-                    configs: '${WORKSPACE}/deployment.yml',
-                    enableConfigSubstitution: true
-                )
+                script {
+                    kubernetesDeploy(
+                        configs: "deployment.yaml", 
+                        kubeconfigId: "aks-pruebas",
+                        enableConfigSubstitution: true)
+                }
             }
         }
     }
