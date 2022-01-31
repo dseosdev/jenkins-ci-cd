@@ -38,10 +38,11 @@ pipeline {
             steps {
                 milestone(1)
                 script {
+
                     kubernetesDeploy(
-                        configs: "php-deployment.yaml", 
-                        kubeconfigId: "aks-pruebas"
-                        //,enableConfigSubstitution: true
+                        configs: "jenkins-ci-cd/php-deployment.yaml", 
+                        kubeconfigId: "aks-pruebas",
+                        enableConfigSubstitution: true
                         )
                 }
             }
