@@ -39,8 +39,8 @@ pipeline {
                 milestone(1)
                 script {
                     git (branch: 'main',
-                    credentialsId: 'github_key_userpass',
-                    url: 'git@github.com:dseosdev/jenkins-ci-cd.git')
+                    //credentialsId: 'github_key_userpass',
+                    url: 'https://github.com/jenkinsci/pipeline-examples.git')
 
                     sh "ls -lat"
                     kubernetesDeploy(
