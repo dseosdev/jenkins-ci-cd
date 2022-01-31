@@ -38,10 +38,16 @@ pipeline {
             steps {
                 milestone(1)
                 script {
+                    git (branch: 'main',
+                    //credentialsId: 'github_key_userpass',
+                    url: 'https://github.com/jenkinsci/pipeline-examples.git')
+
+                    sh "ls -lat"
                     kubernetesDeploy(
                         configs: "php-deployment.yaml", 
                         kubeconfigId: "aks-pruebas",
-                        enableConfigSubstitution: true)
+                        enableConfigSubstitution: true
+                        )
                 }
             }
         }
