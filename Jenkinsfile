@@ -40,7 +40,7 @@ pipeline {
                 script {
                     kubernetesDeploy(
                         configs: "php-deployment.yaml", 
-                        kubeconfigId: "aks_kubeconfig",
+                        kubeconfigId: "aks-pruebas",
                         enableConfigSubstitution: true)
                 }
             }
