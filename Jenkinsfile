@@ -38,9 +38,9 @@ pipeline {
             steps {
                 milestone(1)
                 script {
-
+                    git 'https://github.com/dseosdev/jenkins-ci-cd.git'
                     kubernetesDeploy(
-                        configs: "jenkins-ci-cd/php-deployment.yaml", 
+                        configs: "php-deployment.yaml", 
                         kubeconfigId: "aks-pruebas",
                         enableConfigSubstitution: true
                         )
