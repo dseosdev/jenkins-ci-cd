@@ -1,3 +1,3 @@
 <?php
-echo phpinfo();
-//echo "Página actualizada";
+//echo phpinfo();
+echo "Página actualizada";
